@@ -1,0 +1,10 @@
+# Sim/training side, pinned to the reference set (Nitro today, RTX 4060 box later).
+# Install torch/torchvision separately per machine (CUDA vs CPU wheels).
+mujoco==3.17.0
+numpy==2.2.6
+gymnasium==1.4.0
+scipy==1.15.3
+matplotlib==3.10.9
+tensorboard==2.21.0
+trimesh==5.2.1
+pyyaml>=6.0

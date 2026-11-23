@@ -1,0 +1,26 @@
+# All lengths in metres, angles in degrees. Table top surface is at world z = 0.
+physics:
+  timestep: 0.002
+
+table:
+  size: [0.80, 0.60, 0.05]      # full extents x, y, thickness
+
+bin:
+  inner_size: [0.40, 0.30]      # inner floor extents x, y
+  wall_height: 0.15             # outer height above table top
+  wall_thickness: 0.02
+  floor_thickness: 0.02
+
+camera:
+  name: top_cam
+  height: 0.75                  # optical centre above table top
+  fovy: 45.0                    # vertical field of view
+  width: 256
+  height_px: 256
+
+debug_camera:
+  name: debug_cam
+  pos: [0.75, -0.75, 0.70]
+
+render:
+  gl_backend: egl               # used only if MUJOCO_GL is not already set; null = leave alone
