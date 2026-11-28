@@ -33,6 +33,7 @@ def build_scene_xml(cfg, with_can=False):
     ET.SubElement(root, "option", timestep=str(cfg["physics"]["timestep"]))
     visual = ET.SubElement(root, "visual")
     ET.SubElement(visual, "global", offwidth="1280", offheight="960")
+    ET.SubElement(visual, "quality", offsamples="0")
 
     if with_can:
         cc = cfg["can"]
