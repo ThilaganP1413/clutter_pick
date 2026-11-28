@@ -41,3 +41,33 @@ def estimate_normal(points_map, depth, u, v, radius, K, cam_pos, min_pts=6):
     _, vecs = np.linalg.eigh(q.T @ q)
     n = vecs[:, 0]                                        # smallest-eigenvalue direction
     return (n if n @ (cam_pos - p0) > 0 else -n), len(pts)
+
+def _ball_points(points_map, depth, u, v, radius, K):
+    z = depth[v, u]
+    r = int(np.ceil(K[0, 0] * radius / max(z - radius, 1e-3))) + 1
+    win = points_map[max(v - r, 0):v + r + 1, max(u - r, 0):u + r + 1].reshape(-1, 3)
+    p0 = points_map[v, u]
+    return win[np.linalg.norm(win - p0, axis=1) < radius], p0
+
+
+def estimate_normal(points_map, depth, u, v, radius, K, cam_pos, min_pts=6):
+    """PCA plane fit over back-projected points inside a 3D ball of `radius` around pixel (u, v).
+    Returns (unit normal toward the camera, n_points), or (None, n_points) if too few points."""
+    pts, p0 = _ball_points(points_map, depth, u, v, radius, K)
+    if len(pts) < min_pts:
+        return None, len(pts)
+    q = pts - pts.mean(0)
+    _, vecs = np.linalg.eigh(q.T @ q)
+    n = vecs[:, 0]
+    return (n if n @ (cam_pos - p0) > 0 else -n), len(pts)
+
+
+def surface_variation(points_map, depth, u, v, radius, K):
+    """lambda_min / sum(lambda) of the ball scatter: 0 = flat, ~1/3 = isotropic. Scale-free.
+    Returns (variation, n_points); variation is nan with < 3 points."""
+    pts, _ = _ball_points(points_map, depth, u, v, radius, K)
+    if len(pts) < 3:
+        return float("nan"), len(pts)
+    q = pts - pts.mean(0)
+    ev = np.linalg.eigvalsh(q.T @ q)
+    return float(ev[0] / max(ev.sum(), 1e-18)), len(pts)
