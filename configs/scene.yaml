@@ -55,3 +55,7 @@ suction:
   max_spread: 0.002       # m; bellows stroke budget (max-min hit distance). Barrel ~1.5, shoulder rejected
   max_tilt_deg: 60        # CODs: clip the approach to <= 60 deg from vertical
   min_normal_pts: 6
+
+rl:
+  reward_success: 1.0     # one-step task: critic then estimates P(success)
+  reward_fail: 0.0
