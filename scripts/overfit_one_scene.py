@@ -47,7 +47,7 @@ def main():
             extra = f", first ratio dev {st['first_ratio_dev']:.1e}" if u == 1 else ""
             print(f"upd {u:3d}  success {succ:5.1%}  V {buf.value.mean().item():.3f}  ent {st['ent']:.2f}  "
                   f"kl {st['kl']:.4f}  clip {st['clipfrac']:.2f}  gnorm {st['grad_norm']:.2f}  "
-                  f"t {time.perf_counter() - t_start:5.0f}s{extra}")
+                  f"t {time.perf_counter() - t_start:5.0f}s{extra}  mb {st['minibatches']:2d}")
             streak = streak + 1 if succ >= 0.9 else 0
             if streak >= 3:
                 break
