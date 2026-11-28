@@ -7,6 +7,9 @@ import xml.etree.ElementTree as ET
 
 import numpy as np
 
+from pathlib import Path
+ROOT = Path(__file__).resolve().parents[2]
+
 
 def _v(values):
     return " ".join(f"{float(x):.6g}" for x in values)
@@ -22,7 +25,7 @@ def _look_at_xyaxes(pos, target, up=(0.0, 0.0, 1.0)):
     return np.concatenate([x, y])
 
 
-def build_scene_xml(cfg):
+def build_scene_xml(cfg, with_can=False):
     t, b, c, dc = cfg["table"], cfg["bin"], cfg["camera"], cfg["debug_camera"]
 
     root = ET.Element("mujoco", model="clutter_bin")
@@ -30,6 +33,11 @@ def build_scene_xml(cfg):
     ET.SubElement(root, "option", timestep=str(cfg["physics"]["timestep"]))
     visual = ET.SubElement(root, "visual")
     ET.SubElement(visual, "global", offwidth="1280", offheight="960")
+
+    if with_can:
+        cc = cfg["can"]
+        asset = ET.SubElement(root, "asset")
+        ET.SubElement(asset, "mesh", name="can_mesh", file=str(ROOT / cc["mesh"]), inertia="exact")
 
     world = ET.SubElement(root, "worldbody")
     ET.SubElement(world, "light", pos="0 0 1.5", dir="0 0 -1", directional="true")
@@ -62,6 +70,14 @@ def build_scene_xml(cfg):
     # Debug camera: angled, only for human-readable images/videos.
     ET.SubElement(world, "camera", name=dc["name"], pos=_v(dc["pos"]), fovy="45",
                   xyaxes=_v(_look_at_xyaxes(dc["pos"], [0, 0, h / 2])))
+
+    if with_can:
+        x, y = cc["init_xy"]
+        can = ET.SubElement(world, "body", name="can", pos=_v([x, y, b["floor_thickness"]]))
+        ET.SubElement(can, "freejoint", name="can_free")
+        ET.SubElement(can, "geom", name="can", type="mesh", mesh="can_mesh",
+                      mass=str(cc["mass"]), rgba=_v(cc["rgba"]),
+                      condim=str(cc["condim"]), friction=_v(cc["friction"]))
 
     ET.indent(root)
     return ET.tostring(root, encoding="unicode")

@@ -8,8 +8,8 @@ table:
 bin:
   inner_size: [0.40, 0.30]      # inner floor extents x, y
   wall_height: 0.15             # outer height above table top
-  wall_thickness: 0.02
-  floor_thickness: 0.02
+  wall_thickness: 0.01
+  floor_thickness: 0.01
 
 camera:
   name: top_cam
@@ -24,3 +24,26 @@ debug_camera:
 
 render:
   gl_backend: egl               # used only if MUJOCO_GL is not already set; null = leave alone
+
+can:
+  mesh: assets/objects/soda_can.stl    # origin at base centre, axis +z
+  nominal_dims: [0.066, 0.066, 0.128]  # diameter-matched, scale 0.004272
+  mass: 0.150                          # kg
+  init_xy: [0.0, 0.0]                  # upright on the bin floor
+  rgba: [0.75, 0.10, 0.10, 1.0]
+  condim: 6                          # torsional + rolling friction
+  friction: [1.0, 0.005, 0.0001]     # slide, torsion, rolling [m]
+
+reset:
+  drop_z: 0.15                       # COM height at release [m]
+  xy_range: [0.128, 0.078]           # COM x, y in +-range; bounding sphere stays inside walls
+  p_upright: 0.25                    # probability of starting upright
+  settle:
+    window_s: 0.25                   # compare poses every window
+    max_disp: 0.0004                 # m per window  (~5 mm / 3 s)
+    max_rot: 0.012                   # rad per window (0.4 mm at the 33 mm radius)
+    calm_windows: 2                  # consecutive calm windows required
+    timeout_s: 10.0
+  verify_s: 3.0                      # post-settle simulation time for the drift check
+  verify_drift: 0.005                # m, max drift over verify_s for the determinism check
+  max_attempts: 5
