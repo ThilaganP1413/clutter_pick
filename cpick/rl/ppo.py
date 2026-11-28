@@ -43,7 +43,7 @@ def act(net, depth_np, mask_np, device, greedy=False):
 
 def ppo_update(net, opt, buf, rl):
     adv = buf.reward - buf.value                         # one-step episode: return = reward
-    adv = adv / adv.std().clamp_min(1e-3)                # scale only; V(s) is already the baseline
+    # adv = adv / adv.std().clamp_min(1e-3)                # scale only; V(s) is already the baseline
     s, first = defaultdict(list), True
     for _ in range(rl["epochs"]):
         for idx in torch.randperm(buf.n, device=buf.dev).split(rl["minibatch"]):

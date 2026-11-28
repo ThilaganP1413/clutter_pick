@@ -60,7 +60,7 @@ class PickNet(nn.Module):
         y = self.fuse64(y + self.lat1(s1))
         y = F.interpolate(y, scale_factor=2, mode="bilinear", align_corners=False)
         y = self.fuse128(y + self.lat0(s0))
-        return self.head(y).squeeze(1), self.value(s4).squeeze(1)
+        return self.head(y).squeeze(1), torch.sigmoid(self.value(s4)).squeeze(1)
 
 
 def masked_dist(logits, mask):
