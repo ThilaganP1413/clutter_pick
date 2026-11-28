@@ -1,4 +1,4 @@
-"""M7 piece 3: PPO must overfit one fixed scene (sampled success -> ~100%, argmax succeeds)."""
+"""PPO must overfit one fixed scene (sampled success -> ~100%, argmax succeeds)."""
 import argparse
 import os
 import time
@@ -45,16 +45,20 @@ def main():
             succ = buf.reward.mean().item()
             st = ppo_update(net, opt, buf, rl)
             extra = f", first ratio dev {st['first_ratio_dev']:.1e}" if u == 1 else ""
-            print(f"upd {u:3d}  success {succ:5.1%}  V {buf.value.mean().item():.3f}  ent {st['ent']:.2f}  "
-                  f"kl {st['kl']:.4f}  clip {st['clipfrac']:.2f}  gnorm {st['grad_norm']:.2f}  "
-                  f"t {time.perf_counter() - t_start:5.0f}s{extra}  mb {st['minibatches']:2d}")
-            streak = streak + 1 if succ >= 0.9 else 0
+            ga, *_ = act(net, obs["depth"], obs["mask"], dev, greedy=True)
+            _, gr, _, _, _ = env.step(ga)
+            g_ok = gr == rl["reward_success"]
+            print(f"upd {u:3d}  success {succ:5.1%}  argmax {'ok ' if g_ok else 'BAD'}  "
+                  f"V {buf.value.mean().item():.3f}  ent {st['ent']:.2f}  kl {st.get('kl', 0):.4f}  "
+                  f"stop_kl {st.get('stop_kl', 0):.3f}  mb {st['minibatches']:2d}  gnorm {st['grad_norm']:.1f}  "
+                  f"t {time.perf_counter() - t_start:5.0f}s{extra}")
+            streak = streak + 1 if (succ >= 0.9 and g_ok) else 0
             if streak >= 3:
                 break
         a, *_ = act(net, obs["depth"], obs["mask"], dev, greedy=True)
         _, r, _, _, si = env.step(a)
         print(f"argmax pick {divmod(a, 128)}: reward {r}, reason {si['reason']}")
-        print("OVERFIT PASS" if streak >= 3 and r == rl["reward_success"] else "OVERFIT FAIL -- paste this output")
+        print("OVERFIT PASS" if streak >= 3 else "OVERFIT FAIL")
     finally:
         env.close()
 

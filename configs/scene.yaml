@@ -60,7 +60,7 @@ rl:
   reward_success: 1.0     # one-step task: critic then estimates P(success)
   reward_fail: 0.0
   device: cuda
-  lr: 1.0e-4            # CODs released code (paper text says 5e-4)
+  lr: 3.0e-5            # CODs released code (paper text says 5e-4)
   clip: 0.2
   epochs: 3
   minibatch: 32

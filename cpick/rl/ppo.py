@@ -51,12 +51,15 @@ def ppo_update(net, opt, buf, rl):
             logratio = d.log_prob(buf.action[idx]) - buf.logp[idx]
             ratio = logratio.exp()
             kl = ((ratio - 1) - logratio).mean().item()
-            if first:                                    # before any step: must equal 1
+            if first:                                    # before any step: ratio must equal 1, KL = 0
                 s["first_ratio_dev"].append((ratio - 1).abs().max().item())
                 first = False
-            elif rl.get("target_kl") and kl > rl["target_kl"]:
-                stop = True                              # policy already moved far enough this update
-                break
+            else:
+                if rl.get("target_kl") and kl > rl["target_kl"]:
+                    s["stop_kl"].append(kl)              # the value that ended this update
+                    stop = True
+                    break
+                s["kl"].append(kl)
             a = adv[idx]
             pg = -torch.min(ratio * a, ratio.clamp(1 - rl["clip"], 1 + rl["clip"]) * a).mean()
             vf = F.binary_cross_entropy_with_logits(v_logit, buf.reward[idx])
@@ -67,10 +70,10 @@ def ppo_update(net, opt, buf, rl):
             gn = torch.nn.utils.clip_grad_norm_(net.parameters(), rl["max_grad_norm"])
             opt.step()
             s["pg"].append(pg.item()); s["vf"].append(vf.item()); s["ent"].append(ent.item())
-            s["kl"].append(kl); s["grad_norm"].append(gn.item())
+            s["grad_norm"].append(gn.item())
             s["clipfrac"].append(((ratio - 1).abs() > rl["clip"]).float().mean().item())
         if stop:
             break
-    out = {k: sum(v) / len(v) for k, v in s.items()}
+    out = {k: sum(v) / len(v) for k, v in s.items() if v}
     out["minibatches"] = len(s["pg"])                   # 12 = full update; fewer = KL limit hit
     return out
