@@ -35,37 +35,42 @@ def act(net, depth_np, mask_np, device, greedy=False):
     """One observation -> (action, log-prob, value, depth tensor, mask tensor)."""
     depth = torch.as_tensor(depth_np, device=device)
     mask = torch.as_tensor(mask_np, device=device).bool()
-    logits, v = net(depth[None])
+    logits, v_logit = net(depth[None])
     d = masked_dist(logits, mask[None])
     a = d.logits.argmax(-1) if greedy else d.sample()
-    return int(a), float(d.log_prob(a)), float(v), depth, mask
+    return int(a), float(d.log_prob(a)), float(torch.sigmoid(v_logit)), depth, mask
 
 
 def ppo_update(net, opt, buf, rl):
-    adv = buf.reward - buf.value                         # one-step episode: return = reward
-    # adv = adv / adv.std().clamp_min(1e-3)                # scale only; V(s) is already the baseline
-    s, first = defaultdict(list), True
+    adv = buf.reward - buf.value          # rewards fixed in {0, 1}: raw advantages are already well scaled
+    s, first, stop = defaultdict(list), True, False
     for _ in range(rl["epochs"]):
         for idx in torch.randperm(buf.n, device=buf.dev).split(rl["minibatch"]):
-            logits, v = net(buf.depth[idx])
+            logits, v_logit = net(buf.depth[idx])
             d = masked_dist(logits, buf.mask[idx])
             logratio = d.log_prob(buf.action[idx]) - buf.logp[idx]
             ratio = logratio.exp()
+            kl = ((ratio - 1) - logratio).mean().item()
             if first:                                    # before any step: must equal 1
                 s["first_ratio_dev"].append((ratio - 1).abs().max().item())
                 first = False
+            elif rl.get("target_kl") and kl > rl["target_kl"]:
+                stop = True                              # policy already moved far enough this update
+                break
             a = adv[idx]
             pg = -torch.min(ratio * a, ratio.clamp(1 - rl["clip"], 1 + rl["clip"]) * a).mean()
-            vf = F.smooth_l1_loss(v, buf.reward[idx])
+            vf = F.binary_cross_entropy_with_logits(v_logit, buf.reward[idx])
             ent = d.entropy().mean()
             loss = pg + rl["vf_coef"] * vf - rl["ent_coef"] * ent
             opt.zero_grad(set_to_none=True)
             loss.backward()
             gn = torch.nn.utils.clip_grad_norm_(net.parameters(), rl["max_grad_norm"])
             opt.step()
-            with torch.no_grad():
-                s["pg"].append(pg.item()); s["vf"].append(vf.item()); s["ent"].append(ent.item())
-                s["kl"].append(((ratio - 1) - logratio).mean().item())
-                s["clipfrac"].append(((ratio - 1).abs() > rl["clip"]).float().mean().item())
-                s["grad_norm"].append(gn.item())
-    return {k: sum(v) / len(v) for k, v in s.items()}
+            s["pg"].append(pg.item()); s["vf"].append(vf.item()); s["ent"].append(ent.item())
+            s["kl"].append(kl); s["grad_norm"].append(gn.item())
+            s["clipfrac"].append(((ratio - 1).abs() > rl["clip"]).float().mean().item())
+        if stop:
+            break
+    out = {k: sum(v) / len(v) for k, v in s.items()}
+    out["minibatches"] = len(s["pg"])                   # 12 = full update; fewer = KL limit hit
+    return out

@@ -46,6 +46,8 @@ class PickNet(nn.Module):
         nn.init.zeros_(self.head.bias)
         self.value = nn.Sequential(nn.Conv2d(512, 16, 1), nn.ReLU(inplace=True), nn.Flatten(),
                                    nn.Linear(16 * 32 * 32, 256), nn.ReLU(inplace=True), nn.Linear(256, 1))
+        nn.init.zeros_(self.value[-1].weight)
+        nn.init.zeros_(self.value[-1].bias)
 
     def forward(self, depth):
         """depth (B, 256, 256) metric z-depth -> logits (B, 128, 128), value (B,)."""
@@ -60,7 +62,7 @@ class PickNet(nn.Module):
         y = self.fuse64(y + self.lat1(s1))
         y = F.interpolate(y, scale_factor=2, mode="bilinear", align_corners=False)
         y = self.fuse128(y + self.lat0(s0))
-        return self.head(y).squeeze(1), torch.sigmoid(self.value(s4)).squeeze(1)
+        return self.head(y).squeeze(1), self.value(s4).squeeze(1)
 
 
 def masked_dist(logits, mask):
