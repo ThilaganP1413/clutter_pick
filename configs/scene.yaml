@@ -3,7 +3,7 @@ physics:
   timestep: 0.002
 
 table:
-  size: [0.80, 0.60, 0.05]      # full extents x, y, thickness
+  size: [1.00, 1.00, 0.05]      # full extents x, y, thickness
 
 bin:
   inner_size: [0.40, 0.30]      # inner floor extents x, y
@@ -50,3 +50,8 @@ reset:
 
 suction:
   cup_radius: 0.010     # m; normal-fit ball radius AND (M5) ray-ring radius. ~1 kg vertical at 60 kPa
+  n_ring: 6               # CODs: 1 centre + 6 border rays
+  standoff: 0.02          # m; ray origins start this far above the point along the approach
+  max_spread: 0.002       # m; bellows stroke budget (max-min hit distance). Barrel ~1.5, shoulder rejected
+  max_tilt_deg: 60        # CODs: clip the approach to <= 60 deg from vertical
+  min_normal_pts: 6
