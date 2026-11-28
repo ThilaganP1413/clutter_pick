@@ -69,3 +69,5 @@ rl:
   vf_coef: 0.5          # unspecified in CODs; common default
   max_grad_norm: 0.5
   target_kl: 0.05
+  total_steps: 100000   # budget per training seed (env steps)
+  eval_every: 5000      # val evaluation + checkpoint interval (env steps)
