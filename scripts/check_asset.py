@@ -99,7 +99,7 @@ def main():
           f"seg+ray hit can {hit}; surface {(rim_z - surf_z) * 1000:.2f} mm below rim top")
     ok &= abs(measured - expected) < 1e-3 and hit
 
-    print("ALL CHECKS PASS" if ok else "SOME CHECKS FAILED -- paste this output")
+    print("ALL CHECKS PASS" if ok else "SOME CHECKS FAILED ")
     plt.imsave(out / "rgb_debug.png", rgb_debug)
     plt.imsave(out / "seg.png", seg, cmap="tab20")
     fig, ax = plt.subplots(figsize=(5, 4))

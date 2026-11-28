@@ -83,7 +83,7 @@ def main():
 
     ok = (not failed and sum(timeouts) == 0 and drifts.max() < rc["verify_drift"]
           and max(dets) < 1e-9)
-    print("ALL CHECKS PASS" if ok else "SOME CHECKS FAILED -- paste this output")
+    print("ALL CHECKS PASS" if ok else "SOME CHECKS FAILED ")
 
 
 if __name__ == "__main__":

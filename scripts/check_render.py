@@ -65,7 +65,7 @@ def main():
     ok &= "bin_floor" in visible
 
     print("K =\n", np.round(K, 3))
-    print("ALL CHECKS PASS" if ok else "SOME CHECKS FAILED -- paste this output")
+    print("ALL CHECKS PASS" if ok else "SOME CHECKS FAILED ")
 
     plt.imsave(out / "rgb.png", rgb)
     plt.imsave(out / "rgb_debug.png", rgb_debug)

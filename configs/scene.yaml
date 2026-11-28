@@ -47,3 +47,6 @@ reset:
   verify_s: 3.0                      # post-settle simulation time for the drift check
   verify_drift: 0.005                # m, max drift over verify_s for the determinism check
   max_attempts: 5
+
+suction:
+  cup_radius: 0.010     # m; normal-fit ball radius AND (M5) ray-ring radius. ~1 kg vertical at 60 kPa
